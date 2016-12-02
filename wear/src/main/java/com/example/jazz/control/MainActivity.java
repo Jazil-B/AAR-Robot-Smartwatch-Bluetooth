@@ -88,7 +88,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 // Loop through paired devices
                 for (BluetoothDevice device : pairedDevices) {
 
-                    Log.d("Appaired with :","->+ "+device.getName());
+                    Log.d("Appaired with :","-> "+device.getName());
                     if(device.getName().contains("HC-05")) {
 
                         robot = device;
