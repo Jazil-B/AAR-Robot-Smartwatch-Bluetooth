@@ -9,56 +9,74 @@
     tools:context="com.example.jazz.control.MainActivity"
     tools:deviceIds="wear">
 
-    <Button
+    <!--<Button
         android:id="@+id/button_send2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:text="haut"
         android:onClick="sendMessage"
-        style="@android:style/Widget.Holo.Light.Button.Small" />
+        style="@android:style/Widget.Holo.Light.Button.Small" />-->
 
-    <Button
+    <!--<Button
         android:id="@+id/button_send3"
         android:layout_width="40dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical|right"
         android:text="droite"
         android:onClick="sendMessage"
-        />
+        />-->
 
-    <Button
+    <!--<Button
         android:id="@+id/button_send4"
         android:layout_width="40dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical|left"
         android:text="gauche"
         android:onClick="sendMessage"
-        />
+        />-->
 
-    <Button
+    <!--<TextView
+        android:id="@+id/tv"
+        android:layout_width="128dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:textColor="@android:color/black"
+        app:layout_box="all" />-->
+
+    <!--<TextView
+    android:id="@+id/clock"
+        android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal|center_vertical"
+    android:textColor="@android:color/black"
+    app:layout_box="all"
+        android:layout_width="80dp" />-->
+
+    <!--<Button
         android:id="@+id/button_send"
         android:layout_width="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
         android:text="Bas"
         android:onClick="sendMessage"
         android:textSize="12sp"
+        android:layout_height="40dp" />-->
+
+    <Button
+        android:id="@+id/button_connect"
+        android:layout_width="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="50dp"
+        android:text="Connect"
+        android:textSize="12sp"
         android:layout_height="40dp" />
 
-    <TextView
-        android:id="@+id/tv"
-        android:layout_width="128dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal|center_vertical"
-        android:textColor="@android:color/black"
-        app:layout_box="all" />
-
-    <TextView
-    android:id="@+id/clock"
-        android:layout_height="wrap_content"
-    android:layout_gravity="center_horizontal|center_vertical"
-    android:textColor="@android:color/black"
-    app:layout_box="all"
-        android:layout_width="80dp" />
+    <Button
+        android:id="@+id/button_stop"
+        android:layout_width="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="50dp"
+        android:text="STOP"
+        android:textSize="12sp"
+        android:layout_height="40dp" />
 
 </android.support.wearable.view.BoxInsetLayout>

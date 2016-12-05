@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
 
     private final static int REQUEST_CODE_ENABLE_BLUETOOTH = 0;
     BluetoothAdapter mBluetoothAdapter;
-    private static BluetoothResponseHandler mHandler;
+    //private static BluetoothResponseHandler mHandler;
 
     BluetoothDevice robot;
     private BluetoothSocket socket = null;
@@ -54,8 +54,8 @@ public class MainActivity extends Activity {
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        if (mHandler == null) mHandler = new BluetoothResponseHandler(this);
-        else mHandler.setTarget(this);
+        /*if (mHandler == null) mHandler = new BluetoothResponseHandler(this);
+        else mHandler.setTarget(this);*/
 
         if (mBluetoothAdapter == null)
             Toast.makeText(this, "La montre ne supporte pas le Bluetooth",
