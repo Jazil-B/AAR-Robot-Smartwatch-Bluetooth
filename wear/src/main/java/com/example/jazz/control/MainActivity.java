@@ -176,7 +176,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                         if(connectThread==null)
                             connectThread = new ConnectThread(robot,UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"), mBluetoothAdapter);
                         connectThread.run();
-
+ 
                     }
                 }
             }
