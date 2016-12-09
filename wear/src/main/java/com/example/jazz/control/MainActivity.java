@@ -80,7 +80,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         mContainerView = (BoxInsetLayout) findViewById(R.id.container);
         mTextView = (TextView) findViewById(R.id.text);
         //mClockView = (TextView) findViewById(R.id.clock);
-        //tv = (TextView) findViewById(R.id.tv);
+        tv = (TextView) findViewById(R.id.tv);
 
         onCreate = true;
 
@@ -281,8 +281,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
 
         //else it will output the Roll, Pitch and Yawn values
-        /*tv.setText("Orientation X  :"+ Float.toString(event.values[2]) +"\n"+
-                "Orientation Y  :"+ Float.toString(event.values[1]) );*/
+        tv.setText("Orientation X  :"+ Float.toString(event.values[2]) +"\n"+
+                "Orientation Y  :"+ Float.toString(event.values[1]) );
 
       //  Log.d("orientation",Float.toString(event.values[2]) +" " +  Float.toString(event.values[1]) + " " + Float.toString(event.values[0]));
     }
