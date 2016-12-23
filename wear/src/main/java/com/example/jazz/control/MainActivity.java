@@ -39,9 +39,11 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     private TextView mTextView;
     private TextView mClockView;
 
+    private GraphView mDrawView;
     private TextView tv;
     //the Sensor Manager
     private SensorManager sManager;
+    private GraphDrawing callback;
 
     private float XOrientation1, XOrientation2, YOrientation1, YOrientation2;
     private boolean onCreate = false;
@@ -75,7 +77,14 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_graph);
+
+        mDrawView = (GraphView)findViewById(R.id.GraphView);
+        // rend visible la vue
+        mDrawView.setVisibility(View.VISIBLE);
+
+        callback = mDrawView;
+
         setAmbientEnabled();
 
         mContainerView = (BoxInsetLayout) findViewById(R.id.container);
@@ -271,20 +280,23 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             YOrientation2 = event.values[1];
 
             if(YOrientation2 - YOrientation1 >= DELTA){
-
                 sendValue("H");
+                callback.drawGraph(0);
             }
 
             if(XOrientation1 - XOrientation2 >= DELTA){
                 sendValue("D");
+                callback.drawGraph(1);
             }
 
             if(YOrientation2 - YOrientation1 < -DELTA){
                 sendValue("B");
+                callback.drawGraph(2);
             }
 
             if(XOrientation1 - XOrientation2 < -DELTA){
                 sendValue("G");
+                callback.drawGraph(3);
             }
         }
 
@@ -557,6 +569,10 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 }
             }
         }
+    }
+
+    public interface GraphDrawing {
+        void drawGraph(int dir);
     }
 
 }
