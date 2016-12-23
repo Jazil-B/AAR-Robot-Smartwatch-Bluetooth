@@ -31,6 +31,7 @@ import java.util.UUID;
 
 public class MainActivity extends WearableActivity implements SensorEventListener {
 
+
     private static final SimpleDateFormat AMBIENT_DATE_FORMAT =
             new SimpleDateFormat("HH:mm", Locale.US);
 
@@ -109,12 +110,12 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 for (BluetoothDevice device : pairedDevices) {
 
                     Log.d("Appaired with :","-> "+device.getName());
-                    if(device.getName().contains("HC-05")) {
+                    if(device.getName().contains("raspberrypi")) {
 
                         robot = device;
 
-                        if(connectThread==null)
-                            connectThread = new ConnectThread(robot,UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"), mBluetoothAdapter);
+                        //if(connectThread==null)
+                            connectThread = new ConnectThread(robot,UUID.fromString("00001200-0000-1000-8000-00805f9b34fb"), mBluetoothAdapter);
                         connectThread.run();
 
                     }
@@ -167,7 +168,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         Button button_connect = (Button) findViewById(R.id.button_connect);
         button_connect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+                /*Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
 
                 for (BluetoothDevice device : pairedDevices) {
                     if(device.getName().contains("HC-05")) {
@@ -176,9 +177,9 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                         if(connectThread==null)
                             connectThread = new ConnectThread(robot,UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"), mBluetoothAdapter);
                         connectThread.run();
- 
+
                     }
-                }
+                }*/
             }
         });
 
@@ -187,7 +188,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             public void onClick(View v) {
 
                 StopSending = !StopSending;
-                Toast.makeText(getApplicationContext(), StopSending ? "Envoi activé" : "Envoi stoppé", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), !StopSending ? "Envoi activé" : "Envoi stoppé", Toast.LENGTH_SHORT).show();
 
             }
         });
@@ -269,13 +270,22 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             XOrientation2 = event.values[2];
             YOrientation2 = event.values[1];
 
-            if(YOrientation2 - YOrientation1 >= DELTA) sendValue("H");
+            if(YOrientation2 - YOrientation1 >= DELTA){
 
-            if(XOrientation1 - XOrientation2 >= DELTA) sendValue("D");
+                sendValue("H");
+            }
 
-            if(YOrientation2 - YOrientation1 < -DELTA) sendValue("B");
+            if(XOrientation1 - XOrientation2 >= DELTA){
+                sendValue("D");
+            }
 
-            if(XOrientation1 - XOrientation2 < -DELTA) sendValue("G");
+            if(YOrientation2 - YOrientation1 < -DELTA){
+                sendValue("B");
+            }
+
+            if(XOrientation1 - XOrientation2 < -DELTA){
+                sendValue("G");
+            }
         }
 
 
@@ -290,6 +300,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
     private void sendValue(String value) {
         if(connectedThread != null && getState() == MainActivity.STATE_CONNECTED) {
+            Log.d("SendValue", "sending "+value);
             byte[] command = value.getBytes();
             write(command);
         }
