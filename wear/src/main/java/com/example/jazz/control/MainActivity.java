@@ -119,12 +119,12 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 for (BluetoothDevice device : pairedDevices) {
 
                     Log.d("Appaired with :","-> "+device.getName());
-                    if(device.getName().contains("raspberrypi")) {
+                    if(device.getName().contains("HC-05")) {
 
                         robot = device;
 
                         //if(connectThread==null)
-                            connectThread = new ConnectThread(robot,UUID.fromString("00001200-0000-1000-8000-00805f9b34fb"), mBluetoothAdapter);
+                            connectThread = new ConnectThread(robot,UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"), mBluetoothAdapter);
                         connectThread.run();
 
                     }
@@ -175,9 +175,9 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         });*/
 
         Button button_connect = (Button) findViewById(R.id.button_connect);
-        button_connect.setOnClickListener(new View.OnClickListener() {
+    /*    button_connect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                /*Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+                *//*Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
 
                 for (BluetoothDevice device : pairedDevices) {
                     if(device.getName().contains("HC-05")) {
@@ -188,19 +188,19 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                         connectThread.run();
 
                     }
-                }*/
+                }*//*
             }
-        });
+        });*/
 
         Button button_stop = (Button) findViewById(R.id.button_stop);
-        button_stop.setOnClickListener(new View.OnClickListener() {
+     /*   button_stop.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 
                 StopSending = !StopSending;
                 Toast.makeText(getApplicationContext(), !StopSending ? "Envoi activé" : "Envoi stoppé", Toast.LENGTH_SHORT).show();
 
             }
-        });
+        });*/
 
 
     }
@@ -239,10 +239,15 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
     protected void onStop()
     {
+
+        sendValue("X");
+
         //unregister the sensor listener
         sManager.unregisterListener(this);
         stop();
         super.onStop();
+
+
     }
 
 
@@ -250,9 +255,13 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     protected void onDestroy() {
         super.onDestroy();
 
+        sendValue("X");
+
         mBluetoothAdapter.cancelDiscovery();
 
-       // connectThread.cancel();
+
+
+        // connectThread.cancel();
        // connectedThread.cancel();
     }
 
@@ -282,29 +291,26 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             if(YOrientation2 - YOrientation1 >= DELTA){
                 sendValue("H");
                 callback.drawGraph(0);
-            }
-
-            if(XOrientation1 - XOrientation2 >= DELTA){
+            }else if(XOrientation1 - XOrientation2 >= DELTA){
                 sendValue("D");
                 callback.drawGraph(1);
-            }
-
-            if(YOrientation2 - YOrientation1 < -DELTA){
+            }else if(YOrientation2 - YOrientation1 < -DELTA){
                 sendValue("B");
                 callback.drawGraph(2);
-            }
-
-            if(XOrientation1 - XOrientation2 < -DELTA){
+            }else if(XOrientation1 - XOrientation2 < -DELTA){
                 sendValue("G");
                 callback.drawGraph(3);
+            }else{
+                sendValue("X");
+
             }
         }
 
 
 
         //else it will output the Roll, Pitch and Yawn values
-        tv.setText("Orientation X  :"+ Float.toString(event.values[2]) +"\n"+
-                "Orientation Y  :"+ Float.toString(event.values[1]) );
+//        tv.setText("Orientation X  :"+ Float.toString(event.values[2]) +"\n"+
+  //              "Orientation Y  :"+ Float.toString(event.values[1]) );
 
       //  Log.d("orientation",Float.toString(event.values[2]) +" " +  Float.toString(event.values[1]) + " " + Float.toString(event.values[0]));
     }

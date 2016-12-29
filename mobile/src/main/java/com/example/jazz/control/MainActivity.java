@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -89,34 +90,33 @@ public class MainActivity extends Activity implements SensorEventListener {
         if (mBluetoothAdapter == null)
             Toast.makeText(this, "La montre ne supporte pas le Bluetooth",
                     Toast.LENGTH_SHORT).show();
-//        else {
-//
-//            if(!mBluetoothAdapter.isEnabled()) mBluetoothAdapter.enable();
-//
-//            Toast.makeText(this, "Bluetooth detecté et activé",
-//                    Toast.LENGTH_SHORT).show();
-//
-//            Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-//            // If there are paired devices
-//            if (pairedDevices.size() > 0) {
-//                // Loop through paired devices
-//                for (BluetoothDevice device : pairedDevices) {
-//
-//                    Log.d("Appaired with :","-> "+device.getName());
-//                    if(device.getName().contains("raspberrypi")) {
-//
-//                        robot = device;
-//
-//                        //if(connectThread==null)
-//                            connectThread = new ConnectThread(robot,UUID.fromString("00001200-0000-1000-8000-00805f9b34fb"), mBluetoothAdapter);
-//                        connectThread.run();
-//
-//                    }
-//                }
-//
-//
-//            }
- //       }
+        else {
+
+            if(!mBluetoothAdapter.isEnabled()) mBluetoothAdapter.enable();
+
+            Toast.makeText(this, "Bluetooth detecté et activé",
+                    Toast.LENGTH_SHORT).show();
+
+            Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+            // If there are paired devices
+            if (pairedDevices.size() > 0) {
+                // Loop through paired devices
+                for (BluetoothDevice device : pairedDevices) {
+
+                    Log.d("Appaired with :","-> "+device.getName());
+                    if(device.getName().contains("raspberrypi")) {
+
+                        robot = device;
+
+                        //if(connectThread==null)
+                            connectThread = new ConnectThread(robot,UUID.fromString("1e0ca4ea-299d-4335-93eb-27fcfe7fa848"), mBluetoothAdapter);
+                        connectThread.run();
+
+                    }
+                }
+
+            }
+        }
 
 //        Button button_stop = (Button) findViewById(R.id.button_stop);
 //        button_stop.setOnClickListener(new View.OnClickListener() {
