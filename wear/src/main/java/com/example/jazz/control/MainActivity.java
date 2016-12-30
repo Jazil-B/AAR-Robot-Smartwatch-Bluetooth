@@ -10,6 +10,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.util.Pair;
 import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.BoxInsetLayout;
 import android.util.Log;
@@ -24,9 +25,13 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends WearableActivity implements SensorEventListener {
@@ -74,6 +79,12 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     static ConnectThread connectThread;
     static ConnectedThread connectedThread;
 
+    ControlBDD bdd;
+    String currentDir = null;
+    long avant, apres;
+    int time = 0;
+    private boolean sameDirection = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,6 +109,10 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         sManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        bdd = new ControlBDD(this);
+
+        bdd.open();
 
         if (mHandler == null) mHandler = new BluetoothResponseHandler(this);
         else mHandler.setTarget(this);
@@ -129,79 +144,39 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
                     }
                 }
-
-
             }
         }
 
 
+        mDrawView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
 
+                Toast.makeText(MainActivity.this, "Parcours arrière", Toast.LENGTH_SHORT).show();
 
+                List<Pair<String, Integer>> list =  bdd.getDirections();
 
-        /*Button button = (Button) findViewById(R.id.button_send);
-        button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
+                for(final Pair<String, Integer> p : list) {
 
-                Toast.makeText(getApplicationContext(), "bas", Toast.LENGTH_SHORT).show();
+                    final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+                    executorService.scheduleWithFixedDelay(new Runnable() {
+                        @Override
+                        public void run() {
+                            switch(p.first) {
+                                case "H" : sendValue("B"); break;
+                                case "B" : sendValue("H"); break;
+                                case "D" : sendValue("G"); break;
+                                case "G" : sendValue("D"); break;
+                                default : break;
+                            }
+                        }
+                    }, 0, p.second, TimeUnit.MILLISECONDS);
 
+                }
+
+                return true;
             }
         });
-
-        Button button2 = (Button) findViewById(R.id.button_send2);
-        button2.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-
-                Toast.makeText(getApplicationContext(), "haut", Toast.LENGTH_SHORT).show();
-
-            }
-        });
-
-        Button button3 = (Button) findViewById(R.id.button_send3);
-        button3.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-
-                Toast.makeText(getApplicationContext(), "droite", Toast.LENGTH_SHORT).show();
-
-            }
-        });
-
-        Button button4 = (Button) findViewById(R.id.button_send4);
-        button4.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-
-                Toast.makeText(getApplicationContext(), "gauche", Toast.LENGTH_SHORT).show();
-
-            }
-        });*/
-
-        Button button_connect = (Button) findViewById(R.id.button_connect);
-    /*    button_connect.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                *//*Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-
-                for (BluetoothDevice device : pairedDevices) {
-                    if(device.getName().contains("HC-05")) {
-
-                        robot = device;
-                        if(connectThread==null)
-                            connectThread = new ConnectThread(robot,UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"), mBluetoothAdapter);
-                        connectThread.run();
-
-                    }
-                }*//*
-            }
-        });*/
-
-        Button button_stop = (Button) findViewById(R.id.button_stop);
-     /*   button_stop.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-
-                StopSending = !StopSending;
-                Toast.makeText(getApplicationContext(), !StopSending ? "Envoi activé" : "Envoi stoppé", Toast.LENGTH_SHORT).show();
-
-            }
-        });*/
-
 
     }
 
@@ -246,8 +221,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         sManager.unregisterListener(this);
         stop();
         super.onStop();
-
-
     }
 
 
@@ -325,9 +298,31 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     private void sendValue(String value) {
         if(connectedThread != null && getState() == MainActivity.STATE_CONNECTED) {
             Log.d("SendValue", "sending "+value);
+
+            if(time == 0) {
+                avant = System.currentTimeMillis();
+            }
+
+            if(currentDir == null) currentDir = value;
+
+            if(!(sameDirection = sameDirection(value))) {
+                apres = System.currentTimeMillis();
+
+                time = (int) (apres - avant);
+
+                bdd.insertDirection(currentDir, time);
+
+                currentDir = value;
+                time = 0;
+            }
+
             byte[] command = value.getBytes();
             write(command);
         }
+    }
+
+    private boolean sameDirection(String value) {
+        return value.equals(currentDir);
     }
 
     private synchronized void setState(int state) {
