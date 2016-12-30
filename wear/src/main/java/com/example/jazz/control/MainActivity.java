@@ -294,18 +294,19 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             }else if(XOrientation1 - XOrientation2 >= DELTA){
                 sendValue("D");
                 callback.drawGraph(1);
-            }else if(YOrientation2 - YOrientation1 < -DELTA){
+            }else if(YOrientation2 - YOrientation1 <= -DELTA && YOrientation2 - YOrientation1 >= -(DELTA*2)){
                 sendValue("B");
                 callback.drawGraph(2);
-            }else if(XOrientation1 - XOrientation2 < -DELTA && XOrientation1 - XOrientation2 >= -DELTA*2) {
+            }else if(XOrientation1 - XOrientation2 < -DELTA) {
                 sendValue("G");
                 callback.drawGraph(3);
-            }else if((YOrientation2 - YOrientation1 >= DELTA*2)){
+            }else if(YOrientation2 - YOrientation1 >= DELTA*2){
                 sendValue("T");
                 sendValue("H");
-            }else if (YOrientation2 - YOrientation1 < -DELTA*2){
+            }else if(YOrientation2 - YOrientation1 <= -(DELTA*2)){
                 sendValue("L");
                 sendValue("B");
+                Log.d("BAISSE VITESSE","NOW");
             }else{
                 sendValue("X");
             }
