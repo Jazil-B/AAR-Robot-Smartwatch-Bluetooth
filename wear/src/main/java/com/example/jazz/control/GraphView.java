@@ -77,7 +77,7 @@ public class GraphView extends SurfaceView implements SurfaceHolder.Callback, Ma
                     paint.setColor(Color.rgb(255,153,0));
                     cursorX--;
                     break;
-                default : return;
+                default : break;
             }
 
             p.lineTo(cursorX,cursorY);

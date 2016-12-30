@@ -11,6 +11,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.util.Pair;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -21,9 +22,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends Activity implements SensorEventListener {
@@ -66,6 +71,12 @@ public class MainActivity extends Activity implements SensorEventListener {
     static ConnectThread connectThread;
     static ConnectedThread connectedThread;
 
+    ControlBDD bdd;
+    String currentDir = null;
+    long avant, apres;
+    int time = 0;
+    private boolean sameDirection = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,6 +94,10 @@ public class MainActivity extends Activity implements SensorEventListener {
         sManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        bdd = new ControlBDD(this);
+
+        bdd.open();
 
         if (mHandler == null) mHandler = new BluetoothResponseHandler(this);
         else mHandler.setTarget(this);
@@ -118,16 +133,35 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
         }
 
-//        Button button_stop = (Button) findViewById(R.id.button_stop);
-//        button_stop.setOnClickListener(new View.OnClickListener() {
-//            public void onClick(View v) {
-//
-//                StopSending = !StopSending;
-//                Toast.makeText(getApplicationContext(), !StopSending ? "Envoi activé" : "Envoi stoppé", Toast.LENGTH_SHORT).show();
-//
-//            }
-//        });
+        mDrawView.setOnLongClickListener(new View.OnLongClickListener() {
+        @Override
+        public boolean onLongClick(View v) {
 
+            Toast.makeText(MainActivity.this, "Parcours arrière", Toast.LENGTH_SHORT).show();
+
+            List<Pair<String, Integer>> list =  bdd.getDirections();
+
+            for(final Pair<String, Integer> p : list) {
+
+                final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+                executorService.scheduleWithFixedDelay(new Runnable() {
+                    @Override
+                    public void run() {
+                        switch(p.first) {
+                            case "H" : sendValue("B"); break;
+                            case "B" : sendValue("H"); break;
+                            case "D" : sendValue("G"); break;
+                            case "G" : sendValue("D"); break;
+                            default : break;
+                        }
+                    }
+                }, 0, p.second, TimeUnit.MILLISECONDS);
+
+            }
+
+            return true;
+        }
+    });
 
     }
 
@@ -217,9 +251,31 @@ public class MainActivity extends Activity implements SensorEventListener {
     private void sendValue(String value) {
         if(connectedThread != null && getState() == MainActivity.STATE_CONNECTED) {
             Log.d("SendValue", "sending "+value);
+
+            if(time == 0) {
+                avant = System.currentTimeMillis();
+            }
+
+            if(currentDir == null) currentDir = value;
+
+            if(!(sameDirection = sameDirection(value))) {
+                apres = System.currentTimeMillis();
+
+                time = (int) (apres - avant);
+
+                bdd.insertDirection(currentDir, time);
+
+                currentDir = value;
+                time = 0;
+            }
+
             byte[] command = value.getBytes();
             write(command);
         }
+    }
+
+    private boolean sameDirection(String value) {
+        return value.equals(currentDir);
     }
 
     private synchronized void setState(int state) {

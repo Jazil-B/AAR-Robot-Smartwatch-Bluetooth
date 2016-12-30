@@ -282,6 +282,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 Log.d("BAISSE VITESSE","NOW");
             }else{
                 sendValue("X");
+                callback.drawGraph(4);
             }
         }
 
