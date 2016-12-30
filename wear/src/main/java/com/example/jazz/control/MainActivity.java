@@ -347,8 +347,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     private void sendValue(String value) {
         if(connectedThread != null && getState() == MainActivity.STATE_CONNECTED) {
            // Log.d("SendValue", "sending "+value);
-/*
-            if(time == 0) {
+
+            if(!sameDirection) {
                 avant = System.currentTimeMillis();
             }
 
@@ -363,7 +363,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
                 currentDir = value;
                 time = 0;
-            }*/
+            }
 
             byte[] command = value.getBytes();
             write(command);
