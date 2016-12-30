@@ -77,7 +77,11 @@ public class ControlBDD {
         while(!c.isLast()) {
             Pair<String, Integer> map = new Pair<>(c.getString(NUM_COL_DIR),c.getInt(NUM_COL_TIME));
             list.add(map);
+            c.moveToNext();
         }
+
+        //On ferme le cursor
+        c.close();
 
         return list;
     }
