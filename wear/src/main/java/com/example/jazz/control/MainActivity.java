@@ -304,7 +304,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 sendValue("T");
                 sendValue("H");
             }else if (YOrientation2 - YOrientation1 < -DELTA*2){
-                sendValue("G");
+                sendValue("L");
                 sendValue("B");
             }else{
                 sendValue("X");
