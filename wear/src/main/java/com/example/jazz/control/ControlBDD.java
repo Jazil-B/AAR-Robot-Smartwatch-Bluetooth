@@ -15,6 +15,9 @@ import java.util.List;
  */
 
 public class ControlBDD {
+    private ControlPrefs prefs;
+
+    private int version;
 
     private SQLiteDatabase bdd;
     private BaseSQLite baseSQLite;
@@ -34,8 +37,14 @@ public class ControlBDD {
     private static final int NUM_COL_TIME = 3;
 
     public ControlBDD(Context context){
+        prefs = new ControlPrefs(context);
+
+        if((version = prefs.getIntPreference(ControlPrefs.DB_VERSION)) == 0) version = 1;
+
         //On créer la BDD et sa table
-        baseSQLite = new BaseSQLite(context, NOM_BDD, null, 1);
+        baseSQLite = new BaseSQLite(context, NOM_BDD, null, version);
+
+        prefs.saveIntPreference(ControlPrefs.DB_VERSION, version++);
     }
 
     public void open(){
