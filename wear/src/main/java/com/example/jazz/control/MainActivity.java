@@ -288,7 +288,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             XOrientation2 = event.values[2];
             YOrientation2 = event.values[1];
 
-            if(YOrientation2 - YOrientation1 >= DELTA){
+            if(YOrientation2 - YOrientation1 >= DELTA && YOrientation2 - YOrientation1 <= DELTA*2){
                 sendValue("H");
                 callback.drawGraph(0);
             }else if(XOrientation1 - XOrientation2 >= DELTA){
@@ -297,12 +297,17 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             }else if(YOrientation2 - YOrientation1 < -DELTA){
                 sendValue("B");
                 callback.drawGraph(2);
-            }else if(XOrientation1 - XOrientation2 < -DELTA){
+            }else if(XOrientation1 - XOrientation2 < -DELTA && XOrientation1 - XOrientation2 >= -DELTA*2) {
                 sendValue("G");
                 callback.drawGraph(3);
+            }else if((YOrientation2 - YOrientation1 >= DELTA*2)){
+                sendValue("T");
+                sendValue("H");
+            }else if (YOrientation2 - YOrientation1 < -DELTA*2){
+                sendValue("G");
+                sendValue("B");
             }else{
                 sendValue("X");
-
             }
         }
 
