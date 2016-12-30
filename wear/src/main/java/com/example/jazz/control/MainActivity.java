@@ -148,7 +148,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         }
 
 
-        mDrawView.setOnLongClickListener(new View.OnLongClickListener() {
+        findViewById(R.id.container).setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
 
