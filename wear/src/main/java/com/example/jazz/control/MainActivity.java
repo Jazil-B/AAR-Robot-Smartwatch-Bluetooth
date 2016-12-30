@@ -82,7 +82,9 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     ControlBDD bdd;
     String currentDir = null;
     long avant, apres;
+    long first,second;
     int time = 0;
+    int cpt_droite=0,cpt_gauche=0,cpt_zero=0;
     private boolean sameDirection = false;
 
     @Override
@@ -100,6 +102,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
         mContainerView = (BoxInsetLayout) findViewById(R.id.container);
         mTextView = (TextView) findViewById(R.id.text);
+        //mClockView = (TextView) findViewById(R.id.clock);
         tv = (TextView) findViewById(R.id.tv);
 
         onCreate = true;
@@ -147,7 +150,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         }
 
 
-        mDrawView.setOnLongClickListener(new View.OnLongClickListener() {
+        findViewById(R.id.container).setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
 
@@ -213,6 +216,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
     protected void onStop()
     {
+
         sendValue("X");
 
         //unregister the sensor listener
@@ -261,16 +265,56 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
             if(YOrientation2 - YOrientation1 >= DELTA && YOrientation2 - YOrientation1 <= DELTA*2){
                 sendValue("H");
-                callback.drawGraph(0);
+                if(second-first<=0 || second-first>5625){
+                    callback.drawGraph(0);
+                }else if(second-first>0 && second-first<=2500 ){
+                    callback.drawGraph(4);
+                }else if(second-first>2500 && second-first<=3000){
+                    callback.drawGraph(1);
+                }else if(second-first>3000 && second-first<=3750){
+                    callback.drawGraph(5);
+                }else if(second-first>3750 && second-first<=4500){
+                    callback.drawGraph(2);
+                }else if(second-first>4500 && second-first<=4870){
+                    callback.drawGraph(6);
+                }else if(second-first>4870 && second-first<=5250){
+                    callback.drawGraph(3);
+                }else if(second-first>5250 && second-first<=5625){
+                    callback.drawGraph(7);
+                }
             }else if(XOrientation1 - XOrientation2 >= DELTA){
                 sendValue("D");
-                callback.drawGraph(1);
+                if(cpt_droite==0){
+                    first = System.currentTimeMillis();
+                    cpt_droite++;
+                    cpt_zero=0;
+                }
             }else if(YOrientation2 - YOrientation1 <= -DELTA && YOrientation2 - YOrientation1 >= -(DELTA*2)){
                 sendValue("B");
-                callback.drawGraph(2);
+                if(second-first<=0 || second-first>5625){
+                    callback.drawGraph(2);
+                }else if(second-first>0 && second-first<=2500 ){
+                    callback.drawGraph(6);
+                }else if(second-first>2500 && second-first<=3000){
+                    callback.drawGraph(3);
+                }else if(second-first>3000 && second-first<=3750){
+                    callback.drawGraph(7);
+                }else if(second-first>3750 && second-first<=4500){
+                    callback.drawGraph(0);
+                }else if(second-first>4500 && second-first<=4870){
+                    callback.drawGraph(4);
+                }else if(second-first>4870 && second-first<=5250){
+                    callback.drawGraph(1);
+                }else if(second-first>5250 && second-first<=5625){
+                    callback.drawGraph(5);
+                }
             }else if(XOrientation1 - XOrientation2 < -DELTA) {
                 sendValue("G");
-                callback.drawGraph(3);
+                if(cpt_gauche==0){
+                    first = System.currentTimeMillis();
+                    cpt_gauche++;
+                    cpt_zero=0;
+                }
             }else if(YOrientation2 - YOrientation1 >= DELTA*2){
                 sendValue("T");
                 sendValue("H");
@@ -280,18 +324,31 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 Log.d("BAISSE VITESSE","NOW");
             }else{
                 sendValue("X");
-                callback.drawGraph(4);
+                callback.drawGraph(8);
+                if((cpt_zero==0 && cpt_droite!=0) || (cpt_zero==0 && cpt_gauche!=0)) {
+                    second = System.currentTimeMillis();
+                    cpt_zero++;
+                    cpt_droite=0;
+                    cpt_gauche=0;
+                }
             }
         }
 
+
+
+        //else it will output the Roll, Pitch and Yawn values
+//        tv.setText("Orientation X  :"+ Float.toString(event.values[2]) +"\n"+
+  //              "Orientation Y  :"+ Float.toString(event.values[1]) );
+
+      //  Log.d("orientation",Float.toString(event.values[2]) +" " +  Float.toString(event.values[1]) + " " + Float.toString(event.values[0]));
     }
 
 
     private void sendValue(String value) {
         if(connectedThread != null && getState() == MainActivity.STATE_CONNECTED) {
-            Log.d("SendValue", "sending "+value);
-
-            if(!sameDirection) {
+           // Log.d("SendValue", "sending "+value);
+/*
+            if(time == 0) {
                 avant = System.currentTimeMillis();
             }
 
@@ -306,7 +363,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
                 currentDir = value;
                 time = 0;
-            }
+            }*/
 
             byte[] command = value.getBytes();
             write(command);

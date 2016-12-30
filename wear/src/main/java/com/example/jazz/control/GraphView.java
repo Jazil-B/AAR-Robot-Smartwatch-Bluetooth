@@ -77,6 +77,26 @@ public class GraphView extends SurfaceView implements SurfaceHolder.Callback, Ma
                     paint.setColor(Color.rgb(255,153,0));
                     cursorX--;
                     break;
+                case 4 : //Haut droite
+                    paint.setColor(Color.rgb(255,153,0));
+                    cursorX++;
+                    cursorY--;
+                    break;
+                case 5 : //bas droite
+                    paint.setColor(Color.rgb(255,153,0));
+                    cursorX++;
+                    cursorY++;
+                    break;
+                case 6 : //Bas gauche
+                    paint.setColor(Color.rgb(255,153,0));
+                    cursorX--;
+                    cursorY++;
+                    break;
+                case 7 : //Haut gauche
+                    paint.setColor(Color.rgb(255,153,0));
+                    cursorX--;
+                    cursorY--;
+                    break;
                 default : break;
             }
 
