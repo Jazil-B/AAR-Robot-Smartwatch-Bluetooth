@@ -7,6 +7,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -24,10 +25,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.Stack;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -83,12 +86,21 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     String currentDir = null;
     long avant, apres;
     long first,second;
-    int time = 0;
+    long time = 0;
     int cpt_droite=0,cpt_gauche=0,cpt_zero=0;
     private boolean sameDirection = false;
+    boolean reboot = false;
+
+    public static ArrayList<String> MemoList = new ArrayList<String>();
+    public ArrayList<String> MemoListCmp = new ArrayList<String>();
+
+
+    List<Pair<String, Long>> parcours;
+    Stack<Pair<String, Long>> parcours2;
+    private boolean parcoursArriere = false;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_graph);
 
@@ -96,7 +108,17 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         // rend visible la vue
         mDrawView.setVisibility(View.VISIBLE);
 
+        mDrawView.setKeepScreenOn(true);
+
         callback = mDrawView;
+
+        MemoList.add("X");
+        MemoList.add("X");
+        MemoList.add("X");
+        MemoList.add("X");
+
+        parcours = new ArrayList<>();
+        parcours2= new Stack<>();
 
         setAmbientEnabled();
 
@@ -126,8 +148,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
             if(!mBluetoothAdapter.isEnabled()) mBluetoothAdapter.enable();
 
-            Toast.makeText(this, "Bluetooth detecté et activé",
-                    Toast.LENGTH_SHORT).show();
+           /* Toast.makeText(this, "Bluetooth detecté et activé",
+                    Toast.LENGTH_SHORT).show();*/
 
             Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
             // If there are paired devices
@@ -156,25 +178,22 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
                 Toast.makeText(MainActivity.this, "Parcours arrière", Toast.LENGTH_SHORT).show();
 
-                List<Pair<String, Integer>> list =  bdd.getDirections();
+                parcoursArriere = true;
 
-                for(final Pair<String, Integer> p : list) {
+                //System.out.println("List : "+MemoList.toString());
 
-                    final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-                    executorService.scheduleWithFixedDelay(new Runnable() {
-                        @Override
-                        public void run() {
-                            switch(p.first) {
-                                case "H" : sendValue("B"); break;
-                                case "B" : sendValue("H"); break;
-                                case "D" : sendValue("G"); break;
-                                case "G" : sendValue("D"); break;
-                                default : break;
-                            }
-                        }
-                    }, 0, p.second, TimeUnit.MILLISECONDS);
 
-                }
+                LongOperation send = new LongOperation();
+                send.execute(MemoList.toString());
+
+
+                MemoList.clear();
+                parcoursArriere = false;
+
+                MemoList.add("X");
+                MemoList.add("X");
+                MemoList.add("X");
+                MemoList.add("X");
 
                 return true;
             }
@@ -182,6 +201,76 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
     }
 
+    public class LongOperation extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... para) {
+
+            //System.out.println("Test ->  "+para[0]);
+
+
+            para[0]=para[0].replace("[","");
+            para[0]=para[0].replace(" ","");
+            para[0]=para[0].replace(",","");
+            para[0]=para[0].replace("]","");
+
+            char[] ipara = para[0].toCharArray();
+
+
+
+         /*       new Thread(new Runnable() {
+                        public void run() {*/
+
+            for (int i=0; i<para[0].length();i++) {
+                // Toast.makeText(MainActivity.this,"Caractère -> "+ ipara[((para[0].length()-1)-i)], Toast.LENGTH_SHORT).show();
+               // System.out.println("Caractère -> "+ ipara[((para[0].length()-1)-i)]+" indice : "+((para[0].length()-1)-i));
+
+
+                switch (ipara[((para[0].length()-1)-i)]) {
+                    case 'H':
+                        sendValue("B");
+                        sendValue("B");
+
+                        // System.out.println("List : B"+" indice : "+ ((MemoList.size()-1)-i));
+                        break;
+                    case 'B':
+                        sendValue("H");
+                        sendValue("H");
+                        // System.out.println("List : H"+" indice : "+ ((MemoList.size()-1)-i));
+                        break;
+                    case 'D':
+                        sendValue("G");
+                        sendValue("G");
+                        // System.out.println("List : G"+" indice : "+ ((MemoList.size()-1)-i));
+                        break;
+                    case 'G':
+                        sendValue("D");
+                        sendValue("D");
+                        // System.out.println("List : D"+" indice : "+ ((MemoList.size()-1)-i));
+                        break;
+                                 /*   case "X":
+                                        sendValue("X");
+                                        System.out.println("List : X"+" indice : "+ ((MemoList.size()-1)-i));
+                                        break;*/
+                    default:
+                        break;
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+        }
+    }
 
     @Override
     public void onEnterAmbient(Bundle ambientDetails) {
@@ -267,9 +356,11 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
             if(YOrientation2 - YOrientation1 >= DELTA && YOrientation2 - YOrientation1 <= DELTA*2){
                 sendValue("H");
+/*
                 if(second-first<=0 || second-first>5625){
+*/
                     callback.drawGraph(0);
-                }else if(second-first>0 && second-first<=2500 ){
+              /*  }else if(second-first>0 && second-first<=2500 ){
                     callback.drawGraph(4);
                 }else if(second-first>2500 && second-first<=3000){
                     callback.drawGraph(1);
@@ -283,19 +374,23 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                     callback.drawGraph(3);
                 }else if(second-first>5250 && second-first<=5625){
                     callback.drawGraph(7);
-                }
+                }*/
             }else if(XOrientation1 - XOrientation2 >= DELTA){
                 sendValue("D");
-                if(cpt_droite==0){
+                callback.drawGraph(1);
+
+              /*  if(cpt_droite==0){
                     first = System.currentTimeMillis();
                     cpt_droite++;
                     cpt_zero=0;
-                }
+                }*/
             }else if(YOrientation2 - YOrientation1 <= -DELTA && YOrientation2 - YOrientation1 >= -(DELTA*2)){
                 sendValue("B");
+/*
                 if(second-first<=0 || second-first>5625){
+*/
                     callback.drawGraph(2);
-                }else if(second-first>0 && second-first<=2500 ){
+               /* }else if(second-first>0 && second-first<=2500 ){
                     callback.drawGraph(6);
                 }else if(second-first>2500 && second-first<=3000){
                     callback.drawGraph(3);
@@ -309,29 +404,35 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                     callback.drawGraph(1);
                 }else if(second-first>5250 && second-first<=5625){
                     callback.drawGraph(5);
-                }
+                }*/
             }else if(XOrientation1 - XOrientation2 < -DELTA) {
                 sendValue("G");
-                if(cpt_gauche==0){
+              /*  if(cpt_gauche==0){
                     first = System.currentTimeMillis();
                     cpt_gauche++;
                     cpt_zero=0;
-                }
+                }*/
+                callback.drawGraph(3);
+
             }else if(YOrientation2 - YOrientation1 >= DELTA*2){
                 sendValue("T");
                 sendValue("H");
+                callback.drawGraph(4);
+
             }else if(YOrientation2 - YOrientation1 <= -(DELTA*2)){
                 sendValue("L");
                 sendValue("B");
+                callback.drawGraph(5);
+
             }else{
                 sendValue("X");
                 callback.drawGraph(8);
-                if((cpt_zero==0 && cpt_droite!=0) || (cpt_zero==0 && cpt_gauche!=0)) {
+              /*  if((cpt_zero==0 && cpt_droite!=0) || (cpt_zero==0 && cpt_gauche!=0)) {
                     second = System.currentTimeMillis();
                     cpt_zero++;
                     cpt_droite=0;
                     cpt_gauche=0;
-                }
+                }*/
             }
         }
 
@@ -345,26 +446,45 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     }
 
 
-    private void sendValue(String value) {
+    public ArrayList<String> ArrayListCmp(){return MemoList;}
+
+    public void sendValue(String value) {
         if(connectedThread != null && getState() == MainActivity.STATE_CONNECTED) {
-           // Log.d("SendValue", "sending "+value);
-/*
-            if(time == 0) {
-                avant = System.currentTimeMillis();
-            }
+          // Log.d("SendValue", "sending "+value);
 
-            if(currentDir == null) currentDir = value;
+/*            if(!parcoursArriere) {
+                if(time == 0 && !value.equals("X")) {
+                    time = System.currentTimeMillis();
+                    System.out.println("avant : "+time);
+                }
 
-            if(!(sameDirection = sameDirection(value))) {
-                apres = System.currentTimeMillis();
+                if(currentDir == null) currentDir = value;
 
-                time = (int) (apres - avant);
+                //if(!(sameDirection = sameDirection(value))) {
+                    apres = System.currentTimeMillis();
+                    System.out.println("apres : "+apres);
 
-                bdd.insertDirection(currentDir, time);
+                    time = apres - time;
 
-                currentDir = value;
-                time = 0;
+                    System.out.println("time : "+time);
+
+                    if(time != 0) parcours2.push(new Pair<>(currentDir, time));//parcours.add(new Pair<>(currentDir, time));
+
+                    // bdd.insertDirection(currentDir, time);
+
+                    currentDir = value;
+                    time = 0;
+               // }
             }*/
+
+
+            if(!parcoursArriere && !value.equals("X")) {
+
+
+
+                MemoList.add(value);
+
+            }
 
             byte[] command = value.getBytes();
             write(command);
@@ -406,6 +526,10 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         Log.d("Connexion", "Connected to "+socket.getRemoteDevice().getName());
         Toast.makeText(this, "Connecté",
                 Toast.LENGTH_LONG).show();
+
+       // callback.drawGraph(6);
+
+
 
         // Cancel the thread that completed the connection
         if (connectThread != null) {
