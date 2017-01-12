@@ -11,12 +11,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.util.Pair;
 import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.BoxInsetLayout;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,15 +24,9 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.Stack;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends WearableActivity implements SensorEventListener {
@@ -84,19 +76,10 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
     ControlBDD bdd;
     String currentDir = null;
-    long avant, apres;
-    long first,second;
-    long time = 0;
-    int cpt_droite=0,cpt_gauche=0,cpt_zero=0;
-    private boolean sameDirection = false;
-    boolean reboot = false;
 
     public static ArrayList<String> MemoList = new ArrayList<String>();
     public ArrayList<String> MemoListCmp = new ArrayList<String>();
 
-
-    List<Pair<String, Long>> parcours;
-    Stack<Pair<String, Long>> parcours2;
     private boolean parcoursArriere = false;
 
     @Override
@@ -116,9 +99,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         MemoList.add("X");
         MemoList.add("X");
         MemoList.add("X");
-
-        parcours = new ArrayList<>();
-        parcours2= new Stack<>();
 
         setAmbientEnabled();
 
@@ -162,8 +142,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
                         robot = device;
 
-                        //if(connectThread==null)
-                            connectThread = new ConnectThread(robot,UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"), mBluetoothAdapter);
+                        connectThread = new ConnectThread(robot,UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"), mBluetoothAdapter);
                         connectThread.run();
 
                     }
@@ -179,9 +158,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
                 Toast.makeText(MainActivity.this, "Parcours arrière", Toast.LENGTH_SHORT).show();
 
                 parcoursArriere = true;
-
-                //System.out.println("List : "+MemoList.toString());
-
 
                 LongOperation send = new LongOperation();
                 send.execute(MemoList.toString());
@@ -205,9 +181,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         @Override
         protected String doInBackground(String... para) {
 
-            //System.out.println("Test ->  "+para[0]);
-
-
             para[0]=para[0].replace("[","");
             para[0]=para[0].replace(" ","");
             para[0]=para[0].replace(",","");
@@ -215,42 +188,25 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
             char[] ipara = para[0].toCharArray();
 
-
-
-         /*       new Thread(new Runnable() {
-                        public void run() {*/
-
             for (int i=0; i<para[0].length();i++) {
-                // Toast.makeText(MainActivity.this,"Caractère -> "+ ipara[((para[0].length()-1)-i)], Toast.LENGTH_SHORT).show();
-               // System.out.println("Caractère -> "+ ipara[((para[0].length()-1)-i)]+" indice : "+((para[0].length()-1)-i));
-
 
                 switch (ipara[((para[0].length()-1)-i)]) {
                     case 'H':
                         sendValue("B");
                         sendValue("B");
-
-                        // System.out.println("List : B"+" indice : "+ ((MemoList.size()-1)-i));
                         break;
                     case 'B':
                         sendValue("H");
                         sendValue("H");
-                        // System.out.println("List : H"+" indice : "+ ((MemoList.size()-1)-i));
                         break;
                     case 'D':
                         sendValue("G");
                         sendValue("G");
-                        // System.out.println("List : G"+" indice : "+ ((MemoList.size()-1)-i));
                         break;
                     case 'G':
                         sendValue("D");
                         sendValue("D");
-                        // System.out.println("List : D"+" indice : "+ ((MemoList.size()-1)-i));
                         break;
-                                 /*   case "X":
-                                        sendValue("X");
-                                        System.out.println("List : X"+" indice : "+ ((MemoList.size()-1)-i));
-                                        break;*/
                     default:
                         break;
                 }
@@ -275,13 +231,13 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     @Override
     public void onEnterAmbient(Bundle ambientDetails) {
         super.onEnterAmbient(ambientDetails);
-       // updateDisplay();
+        // updateDisplay();
     }
 
     @Override
     public void onUpdateAmbient() {
         super.onUpdateAmbient();
-       // updateDisplay();
+        // updateDisplay();
     }
 
     @Override
@@ -322,11 +278,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         sendValue("X");
 
         mBluetoothAdapter.cancelDiscovery();
-
-
-
-        // connectThread.cancel();
-       // connectedThread.cancel();
     }
 
     public void onAccuracyChanged(Sensor arg0, int arg1)
@@ -336,8 +287,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
     public void onSensorChanged(SensorEvent event)
     {
-
-
         //if sensor is unreliable, return void
         if (event.accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE)
         {
@@ -356,62 +305,18 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
             if(YOrientation2 - YOrientation1 >= DELTA && YOrientation2 - YOrientation1 <= DELTA*2){
                 sendValue("H");
-/*
-                if(second-first<=0 || second-first>5625){
-*/
-                    callback.drawGraph(0);
-              /*  }else if(second-first>0 && second-first<=2500 ){
-                    callback.drawGraph(4);
-                }else if(second-first>2500 && second-first<=3000){
-                    callback.drawGraph(1);
-                }else if(second-first>3000 && second-first<=3750){
-                    callback.drawGraph(5);
-                }else if(second-first>3750 && second-first<=4500){
-                    callback.drawGraph(2);
-                }else if(second-first>4500 && second-first<=4870){
-                    callback.drawGraph(6);
-                }else if(second-first>4870 && second-first<=5250){
-                    callback.drawGraph(3);
-                }else if(second-first>5250 && second-first<=5625){
-                    callback.drawGraph(7);
-                }*/
+                callback.drawGraph(0);
+
             }else if(XOrientation1 - XOrientation2 >= DELTA){
                 sendValue("D");
                 callback.drawGraph(1);
-
-              /*  if(cpt_droite==0){
-                    first = System.currentTimeMillis();
-                    cpt_droite++;
-                    cpt_zero=0;
-                }*/
             }else if(YOrientation2 - YOrientation1 <= -DELTA && YOrientation2 - YOrientation1 >= -(DELTA*2)){
                 sendValue("B");
-/*
-                if(second-first<=0 || second-first>5625){
-*/
-                    callback.drawGraph(2);
-               /* }else if(second-first>0 && second-first<=2500 ){
-                    callback.drawGraph(6);
-                }else if(second-first>2500 && second-first<=3000){
-                    callback.drawGraph(3);
-                }else if(second-first>3000 && second-first<=3750){
-                    callback.drawGraph(7);
-                }else if(second-first>3750 && second-first<=4500){
-                    callback.drawGraph(0);
-                }else if(second-first>4500 && second-first<=4870){
-                    callback.drawGraph(4);
-                }else if(second-first>4870 && second-first<=5250){
-                    callback.drawGraph(1);
-                }else if(second-first>5250 && second-first<=5625){
-                    callback.drawGraph(5);
-                }*/
+
+                callback.drawGraph(2);
+
             }else if(XOrientation1 - XOrientation2 < -DELTA) {
                 sendValue("G");
-              /*  if(cpt_gauche==0){
-                    first = System.currentTimeMillis();
-                    cpt_gauche++;
-                    cpt_zero=0;
-                }*/
                 callback.drawGraph(3);
 
             }else if(YOrientation2 - YOrientation1 >= DELTA*2){
@@ -427,22 +332,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             }else{
                 sendValue("X");
                 callback.drawGraph(8);
-              /*  if((cpt_zero==0 && cpt_droite!=0) || (cpt_zero==0 && cpt_gauche!=0)) {
-                    second = System.currentTimeMillis();
-                    cpt_zero++;
-                    cpt_droite=0;
-                    cpt_gauche=0;
-                }*/
             }
         }
-
-
-
-        //else it will output the Roll, Pitch and Yawn values
-//        tv.setText("Orientation X  :"+ Float.toString(event.values[2]) +"\n"+
-  //              "Orientation Y  :"+ Float.toString(event.values[1]) );
-
-      //  Log.d("orientation",Float.toString(event.values[2]) +" " +  Float.toString(event.values[1]) + " " + Float.toString(event.values[0]));
     }
 
 
@@ -450,40 +341,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
     public void sendValue(String value) {
         if(connectedThread != null && getState() == MainActivity.STATE_CONNECTED) {
-          // Log.d("SendValue", "sending "+value);
-
-/*            if(!parcoursArriere) {
-                if(time == 0 && !value.equals("X")) {
-                    time = System.currentTimeMillis();
-                    System.out.println("avant : "+time);
-                }
-
-                if(currentDir == null) currentDir = value;
-
-                //if(!(sameDirection = sameDirection(value))) {
-                    apres = System.currentTimeMillis();
-                    System.out.println("apres : "+apres);
-
-                    time = apres - time;
-
-                    System.out.println("time : "+time);
-
-                    if(time != 0) parcours2.push(new Pair<>(currentDir, time));//parcours.add(new Pair<>(currentDir, time));
-
-                    // bdd.insertDirection(currentDir, time);
-
-                    currentDir = value;
-                    time = 0;
-               // }
-            }*/
-
-
             if(!parcoursArriere && !value.equals("X")) {
-
-
-
                 MemoList.add(value);
-
             }
 
             byte[] command = value.getBytes();
@@ -526,10 +385,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         Log.d("Connexion", "Connected to "+socket.getRemoteDevice().getName());
         Toast.makeText(this, "Connecté",
                 Toast.LENGTH_LONG).show();
-
-       // callback.drawGraph(6);
-
-
 
         // Cancel the thread that completed the connection
         if (connectThread != null) {
