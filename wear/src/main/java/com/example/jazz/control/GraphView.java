@@ -42,6 +42,7 @@ public class GraphView extends SurfaceView implements SurfaceHolder.Callback, Ma
 
         mThread = new DrawingThread();
 
+        //Lien des images
         imgUp = BitmapFactory.decodeResource(getResources(), R.drawable.up);
         imgDown = BitmapFactory.decodeResource(getResources(), R.drawable.down);
         imgLeft = BitmapFactory.decodeResource(getResources(), R.drawable.left);

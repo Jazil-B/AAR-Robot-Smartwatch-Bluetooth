@@ -95,6 +95,8 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
         callback = mDrawView;
 
+
+        //initialise la ArrayList afin d'arreter le robot une fois le retour à sa position activé
         MemoList.add("X");
         MemoList.add("X");
         MemoList.add("X");
@@ -103,8 +105,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         setAmbientEnabled();
 
         mContainerView = (BoxInsetLayout) findViewById(R.id.container);
-        mTextView = (TextView) findViewById(R.id.text);
-        //mClockView = (TextView) findViewById(R.id.clock);
+
         tv = (TextView) findViewById(R.id.tv);
 
         onCreate = true;
@@ -113,10 +114,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         sManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-        bdd = new ControlBDD(this);
-
-        bdd.open();
 
         if (mHandler == null) mHandler = new BluetoothResponseHandler(this);
         else mHandler.setTarget(this);
