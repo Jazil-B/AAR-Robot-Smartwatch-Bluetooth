@@ -4,15 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import java.util.ArrayList;
 
 public class GraphView extends SurfaceView implements SurfaceHolder.Callback, MainActivity.GraphDrawing {
     // Le holder
@@ -21,10 +17,7 @@ public class GraphView extends SurfaceView implements SurfaceHolder.Callback, Ma
     DrawingThread mThread;
     private boolean fp = false;
 
-    private float cursorX, cursorY;
     private int graphDirection = -1;
-
-    private ArrayList<Graph> graphPaths;
 
     private Bitmap imgUp;
     private Bitmap imgDown;
@@ -59,44 +52,46 @@ public class GraphView extends SurfaceView implements SurfaceHolder.Callback, Ma
 
     private void init() {
 
-        graphPaths = new ArrayList<>();
-
-        cursorX = getWidth() / 2;
-        cursorY = getHeight() - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,10, getResources().getDisplayMetrics());
-
         if ((mThread!=null) && (!mThread.isAlive())) {
             mThread.start();
             Log.d("-FCT-", "cv_thread.start()");
         }
     }
 
-
+    //Ici on dessine sur notre écran
     protected void nDraw(Canvas pCanvas) {
         if(pCanvas != null) {
+            //Fond d'écran de couleur gris
             pCanvas.drawRGB(189, 195, 199);
 
             switch(graphDirection) {
                 case 0 : //Haut
+                    //Affiche l'image de la flèche vers le haut
                     pCanvas.drawBitmap(imgUp,  -30, -30, null);
                     break;
                 case 1 : //Droite
+                    //Affiche l'image de la flèche vers la droite
                     pCanvas.drawBitmap(imgRight, -30, -30, null);
                     break;
                 case 2 : //Bas
+                    //Affiche l'image de la flèche vers le bas
                     pCanvas.drawBitmap(imgDown,  -30, -30, null);
-
                     break;
                 case 3 : //Gauche
+                    //Affiche l'image de la flèche vers la gauche
                     pCanvas.drawBitmap(imgLeft,  -30, -30, null);
                     break;
-                case 4 : //Haut droite
+                case 4 : //Accélération
+                    //Affiche l'image de la flèche d'accélération
                     pCanvas.drawBitmap(imgTurbo,  -30, -30, null);
                     break;
-                case 5 : //bas droite
+                case 5 : //Décélération
+                    //Affiche l'image de la flèche de décélération
                     pCanvas.drawBitmap(imgTurboDown, -30, -30, null);
                     break;
                 default :
                     pCanvas.drawRGB(189, 195, 199);
+                    //Affiche l'image indiquant les directions possibles
                     pCanvas.drawBitmap(imgController, -30, -30, null);
                     break;
             }
@@ -104,6 +99,7 @@ public class GraphView extends SurfaceView implements SurfaceHolder.Callback, Ma
         }
     }
 
+    //Est appelé lorsqu'il y a une rotation de l'écran
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         Log.i("-> FCT <-", "surfaceChanged");
@@ -113,16 +109,19 @@ public class GraphView extends SurfaceView implements SurfaceHolder.Callback, Ma
         }
     }
 
+    //Est appelé lors du démarrage
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         Log.i("-> FCT <-", "surfaceCreated");
     }
 
+    //Est appelé lorsque l'on quitte le programme
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         Log.i("-> FCT <-", "surfaceDestroyed");
     }
 
+    //Permet de récupérer le mouvement de la Montre
     @Override
     public void drawGraph(int dir) {
         graphDirection = dir;
@@ -156,25 +155,6 @@ public class GraphView extends SurfaceView implements SurfaceHolder.Callback, Ma
                     Thread.sleep(20);
                 } catch (InterruptedException e) {}
             }
-        }
-    }
-
-
-    private class Graph {
-        private Path path;
-        private Paint paint;
-
-        public Graph(Path path, Paint paint) {
-            this.path = path;
-            this.paint = paint;
-        }
-
-        public Path getPath() {
-            return path;
-        }
-
-        public Paint getPaint() {
-            return paint;
         }
     }
 }
