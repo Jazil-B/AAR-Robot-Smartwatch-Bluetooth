@@ -74,77 +74,32 @@ public class GraphView extends SurfaceView implements SurfaceHolder.Callback, Ma
         if(pCanvas != null) {
             pCanvas.drawRGB(189, 195, 199);
 
-         /*   Paint paint = new Paint();
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(3);
-            paint.setAntiAlias(true);
-
-            Path p = new Path();
-            p.moveTo(cursorX,cursorY);*/
-
             switch(graphDirection) {
                 case 0 : //Haut
-                  /*  paint.setColor(Color.BLUE);
-                    cursorY--;*/
                     pCanvas.drawBitmap(imgUp,  -30, -30, null);
-
                     break;
                 case 1 : //Droite
-                    //paint.setColor(Color.GREEN);
-                    cursorX++;
-                    //p.lineTo(300f, 0f);
                     pCanvas.drawBitmap(imgRight, -30, -30, null);
-
                     break;
                 case 2 : //Bas
-                    //paint.setColor(Color.RED);
-                    cursorY++;
                     pCanvas.drawBitmap(imgDown,  -30, -30, null);
 
                     break;
                 case 3 : //Gauche
-                    //paint.setColor(Color.rgb(255,153,0));
-                    cursorX--;
                     pCanvas.drawBitmap(imgLeft,  -30, -30, null);
-
                     break;
                 case 4 : //Haut droite
-                    //paint.setColor(Color.rgb(255,153,0));
-                    cursorX++;
-                    cursorY--;
                     pCanvas.drawBitmap(imgTurbo,  -30, -30, null);
-
                     break;
                 case 5 : //bas droite
-                    //paint.setColor(Color.rgb(255,153,0));
-                    cursorX++;
-                    cursorY++;
                     pCanvas.drawBitmap(imgTurboDown, -30, -30, null);
-
                     break;
-               /* case 6 : //Bas gauche
-                    //paint.setColor(Color.rgb(255,153,0));
-                    cursorX--;
-                    cursorY++;
-                    break;*/
-               /* case 7 : //Haut gauche
-                  //  paint.setColor(Color.rgb(255,153,0));
-                    cursorX--;
-                    cursorY--;
-                    break;*/
                 default :
                     pCanvas.drawRGB(189, 195, 199);
                     pCanvas.drawBitmap(imgController, -30, -30, null);
-
                     break;
             }
 
-         /*   p.lineTo(cursorX,cursorY);
-            graphPaths.add(new Graph(p, paint));*/
-
-          /*  for(Graph g : graphPaths) {
-                pCanvas.drawPath(g.getPath(),g.getPaint());
-            }*/
         }
     }
 
