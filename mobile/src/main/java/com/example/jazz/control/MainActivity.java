@@ -8,10 +8,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.util.Pair;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -22,13 +22,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends Activity implements SensorEventListener {
@@ -38,6 +35,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             new SimpleDateFormat("HH:mm", Locale.US);
 
     private GraphView mDrawView;
+    private TextView tv;
     //the Sensor Manager
     private SensorManager sManager;
     private GraphDrawing callback;
@@ -47,57 +45,60 @@ public class MainActivity extends Activity implements SensorEventListener {
     private static final int DELTA = 20;
     private static boolean StopSending = false;
 
-    private final static int REQUEST_CODE_ENABLE_BLUETOOTH = 0;
     BluetoothAdapter mBluetoothAdapter;
 
     private int mState;
 
-    // Constants that indicate the current connection state
-    public static final int STATE_NONE = 0;       // we're doing nothing
-    public static final int STATE_CONNECTING = 1; // now initiating an outgoing connection
-    public static final int STATE_CONNECTED = 2;  // now connected to a remote device
+    // Constantes qui indiquent l'état de la connexion
+    public static final int STATE_NONE = 0;       // On ne fait rien
+    public static final int STATE_CONNECTED = 2;  // Connecté à un device
 
-    public static final int MESSAGE_STATE_CHANGE = 1;
-    public static final int MESSAGE_READ = 2;
     public static final int MESSAGE_WRITE = 3;
     public static final int MESSAGE_DEVICE_NAME = 4;
     public static final int MESSAGE_TOAST = 5;
 
     BluetoothDevice robot;
-    private BluetoothSocket socket = null;
-    private InputStream receiveStream = null;// Canal de réception
-    private OutputStream sendStream = null;// Canal d'émission
     private static BluetoothResponseHandler mHandler;
     static ConnectThread connectThread;
     static ConnectedThread connectedThread;
 
     ControlBDD bdd;
     String currentDir = null;
-    long avant, apres;
-    int time = 0;
-    private boolean sameDirection = false;
+
+    public static ArrayList<String> MemoList = new ArrayList<String>();
+    public ArrayList<String> MemoListCmp = new ArrayList<String>();
+
+    private boolean parcoursArriere = false;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_graph);
 
         mDrawView = (GraphView)findViewById(R.id.GraphView);
+
         // rend visible la vue
         mDrawView.setVisibility(View.VISIBLE);
 
+        //Désactive la mise en veille de la montre
+        mDrawView.setKeepScreenOn(true);
+
         callback = mDrawView;
+
+
+        //initialise la ArrayList afin d'arrêter le robot une fois le retour à sa position activé
+        MemoList.add("X");
+        MemoList.add("X");
+        MemoList.add("X");
+        MemoList.add("X");
 
         onCreate = true;
 
-        //get a hook to the sensor service
+        //On récupère le SensorManager de la montre pour le gyroscope
         sManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
+        //On récupère l'adaptateur Bluetooth de la montre
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-        bdd = new ControlBDD(this);
-
-        bdd.open();
 
         if (mHandler == null) mHandler = new BluetoothResponseHandler(this);
         else mHandler.setTarget(this);
@@ -109,79 +110,135 @@ public class MainActivity extends Activity implements SensorEventListener {
 
             if(!mBluetoothAdapter.isEnabled()) mBluetoothAdapter.enable();
 
-            Toast.makeText(this, "Bluetooth detecté et activé",
-                    Toast.LENGTH_SHORT).show();
-
+            //On boucle parmi la liste des devices appairé à la montre
             Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-            // If there are paired devices
+            // S'il existe des appareils appairés
             if (pairedDevices.size() > 0) {
-                // Loop through paired devices
                 for (BluetoothDevice device : pairedDevices) {
 
                     Log.d("Appaired with :","-> "+device.getName());
-                    if(device.getName().contains("raspberrypi")) {
+                    //On selectionne le robot parmi la liste
+                    if(device.getName().contains("HC-05")) {
 
                         robot = device;
 
-                        //if(connectThread==null)
-                            connectThread = new ConnectThread(robot,UUID.fromString("1e0ca4ea-299d-4335-93eb-27fcfe7fa848"), mBluetoothAdapter);
+                        /*  Une fois que le robot est reconnu parmi la liste des appareils appairée, on démarre le thread de connexion, en passant en
+                            paramètre le BluetoothDevice contenant le robot, et l'UUID de la connexion à effectuer
+                         */
+                        connectThread = new ConnectThread(robot,UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"), mBluetoothAdapter);
                         connectThread.run();
 
                     }
                 }
-
             }
         }
 
-        mDrawView.setOnLongClickListener(new View.OnLongClickListener() {
-        @Override
-        public boolean onLongClick(View v) {
 
-            Toast.makeText(MainActivity.this, "Parcours arrière", Toast.LENGTH_SHORT).show();
+        /* On enregistre un listener qui va écouter si un appui long sur l'écran de la montre à
+            été fait. Cela aura pour conséquence de démarrer le parcours arrière du robot, afin
+            qu'il revienne à son point de départ.
+         */
+        findViewById(R.id.container).setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
 
-            List<Pair<String, Integer>> list =  bdd.getDirections();
+                Toast.makeText(MainActivity.this, "Parcours arrière", Toast.LENGTH_SHORT).show();
 
-            for(final Pair<String, Integer> p : list) {
+                parcoursArriere = true;
 
-                final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-                executorService.scheduleWithFixedDelay(new Runnable() {
-                    @Override
-                    public void run() {
-                        switch(p.first) {
-                            case "H" : sendValue("B"); break;
-                            case "B" : sendValue("H"); break;
-                            case "D" : sendValue("G"); break;
-                            case "G" : sendValue("D"); break;
-                            default : break;
-                        }
-                    }
-                }, 0, p.second, TimeUnit.MILLISECONDS);
+                LongOperation send = new LongOperation();
+                send.execute(MemoList.toString());
 
+
+                MemoList.clear();
+                parcoursArriere = false;
+
+                MemoList.add("X");
+                MemoList.add("X");
+                MemoList.add("X");
+                MemoList.add("X");
+
+                return true;
             }
-
-            return true;
-        }
-    });
+        });
 
     }
 
+    /*  AsyncTask qui permettra de boucler parmi la liste des caractères
+        envoyés au robot enregistrés dans une liste, et de les renvoyer
+        à l'inverse au robot lors du parcours arrière
+     */
+    public class LongOperation extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... para) {
 
-    //when this Activity starts
+            para[0]=para[0].replace("[","");
+            para[0]=para[0].replace(" ","");
+            para[0]=para[0].replace(",","");
+            para[0]=para[0].replace("]","");
+
+            char[] ipara = para[0].toCharArray();
+
+            for (int i=0; i<para[0].length();i++) {
+
+                switch (ipara[((para[0].length()-1)-i)]) {
+                    case 'H':
+                        sendValue("B");
+                        sendValue("B");
+                        break;
+                    case 'B':
+                        sendValue("H");
+                        sendValue("H");
+                        break;
+                    case 'D':
+                        sendValue("G");
+                        sendValue("G");
+                        break;
+                    case 'G':
+                        sendValue("D");
+                        sendValue("D");
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+        }
+    }
+
+
+    // Appelé quand l'Activity démarre.
     @Override
     protected void onResume()
     {
         super.onResume();
-        /*register the sensor listener to listen to the gyroscope sensor, use the
-        callbacks defined in this class, and gather the sensor information as quick
-        as possible*/
+
+        /*  Enregistre le Sensor Listener et lui ordonne d'écouter le capteur du gyroscope,
+            et de récupérer ses valeurs aussi vite que possible.
+         */
         sManager.registerListener(this, sManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),SensorManager.SENSOR_DELAY_FASTEST);
     }
 
-    //When this Activity isn't visible anymore
-
+   //Quand l'Activity n'est plus du tout visible
     protected void onStop()
     {
-        //unregister the sensor listener
+
+        sendValue("X");
+
+        //Déréférence le sensor listener.
         sManager.unregisterListener(this);
         stop();
         super.onStop();
@@ -192,10 +249,9 @@ public class MainActivity extends Activity implements SensorEventListener {
     protected void onDestroy() {
         super.onDestroy();
 
-        mBluetoothAdapter.cancelDiscovery();
+        sendValue("X");
 
-       // connectThread.cancel();
-       // connectedThread.cancel();
+        mBluetoothAdapter.cancelDiscovery();
     }
 
     public void onAccuracyChanged(Sensor arg0, int arg1)
@@ -205,68 +261,70 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     public void onSensorChanged(SensorEvent event)
     {
-
-         //if sensor is unreliable, return void
+        //Si le sensor n'est pas assez précis, on ne l'utilise pas
         if (event.accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE)
         {
             return;
         }
 
+        //Après démarrage de l'application, on récupère les premières valeurs renvoyés par le gyroscope
         if(onCreate) {
             XOrientation1 = event.values[2];
             YOrientation1 = event.values[1];
             onCreate = false;
         }
 
+        /*
+            Pour chaque changement de valeurs du gyroscope, nous enregistrons ces nouvelles valeurs
+            et faisons la différence entre les premières valeurs et ces nouvelles valeurs. En fonction
+            de la valeur de cette différence, nous envoyons un caractère associé à une certaine
+            direction pour le robot.
+         */
         if(!StopSending) {
             XOrientation2 = event.values[2];
             YOrientation2 = event.values[1];
 
-            if(YOrientation2 - YOrientation1 >= DELTA){
+            if(YOrientation2 - YOrientation1 >= DELTA && YOrientation2 - YOrientation1 <= DELTA*2){
                 sendValue("H");
                 callback.drawGraph(0);
-            }
 
-            if(XOrientation1 - XOrientation2 >= DELTA){
+            }else if(XOrientation1 - XOrientation2 >= DELTA){
                 sendValue("D");
                 callback.drawGraph(1);
-            }
-
-            if(YOrientation2 - YOrientation1 < -DELTA){
+            }else if(YOrientation2 - YOrientation1 <= -DELTA && YOrientation2 - YOrientation1 >= -(DELTA*2)){
                 sendValue("B");
-                callback.drawGraph(2);
-            }
 
-            if(XOrientation1 - XOrientation2 < -DELTA){
+                callback.drawGraph(2);
+
+            }else if(XOrientation1 - XOrientation2 < -DELTA) {
                 sendValue("G");
                 callback.drawGraph(3);
+
+            }else if(YOrientation2 - YOrientation1 >= DELTA*2){
+                sendValue("T");
+                sendValue("H");
+                callback.drawGraph(4);
+
+            }else if(YOrientation2 - YOrientation1 <= -(DELTA*2)){
+                sendValue("L");
+                sendValue("B");
+                callback.drawGraph(5);
+
+            }else{
+                // Nous envoyons un "X" pour que le robot reste immobile
+                sendValue("X");
+                callback.drawGraph(8);
             }
         }
-
-
-      //  Log.d("orientation",Float.toString(event.values[2]) +" " +  Float.toString(event.values[1]) + " " + Float.toString(event.values[0]));
     }
 
 
-    private void sendValue(String value) {
+    public ArrayList<String> ArrayListCmp(){return MemoList;}
+
+    public void sendValue(String value) {
         if(connectedThread != null && getState() == MainActivity.STATE_CONNECTED) {
-            Log.d("SendValue", "sending "+value);
-
-            if(time == 0) {
-                avant = System.currentTimeMillis();
-            }
-
-            if(currentDir == null) currentDir = value;
-
-            if(!(sameDirection = sameDirection(value))) {
-                apres = System.currentTimeMillis();
-
-                time = (int) (apres - avant);
-
-                bdd.insertDirection(currentDir, time);
-
-                currentDir = value;
-                time = 0;
+            if(!parcoursArriere && !value.equals("X")) {
+                MemoList.add(value);
             }
 
             byte[] command = value.getBytes();
@@ -310,7 +368,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         Toast.makeText(this, "Connecté",
                 Toast.LENGTH_LONG).show();
 
-        // Cancel the thread that completed the connection
+        // On annule le thread qui à complété la connexion
         if (connectThread != null) {
             connectThread.cancel();
             connectThread = null;
@@ -323,13 +381,12 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         setState(STATE_CONNECTED);
 
-        // Send the name of the connected device back to the UI Activity
+        // On envoie le nom du device connecté au thread principal
         Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_DEVICE_NAME, socket.getRemoteDevice().getName());
         mHandler.sendMessage(msg);
 
-        // Start the thread to manage the connection and perform transmissions
+        //Démarre le thread qui gérera la connexion et s'occupera de la transmission
         connectedThread = new ConnectedThread(socket);
-        //connectedThread.start();
     }
 
 
@@ -350,13 +407,12 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     public void write(byte[] data) {
         ConnectedThread r;
-        // Synchronize a copy of the ConnectedThread
+        // On synchronise une copie du ConnectedThread
         synchronized (this) {
             if (mState != STATE_CONNECTED) return;
             r = connectedThread;
         }
 
-        // Perform the write unsynchronized
         if (data.length == 1) r.write(data[0]);
         else r.writeData(data);
     }
@@ -371,21 +427,23 @@ public class MainActivity extends Activity implements SensorEventListener {
         public ConnectThread(BluetoothDevice device, UUID uuid, BluetoothAdapter adapter) {
             this.adapter = adapter;
             this.uuid = uuid;
-            // Use a temporary object that is later assigned to mmSocket,
-            // because mmSocket is final
+            //On utilise un objet temporaire, assigné plus tard à mmSocket
+            //parce que mmSocket est final
             BluetoothSocket tmp = null;
             mmDevice = device;
 
-            // Get a BluetoothSocket to connect with the given BluetoothDevice
+            // On essaye d'obtenir un BluetoothSocket pour le connecter
+            // avec le BluetoothDevice donné
             try {
-                // MY_UUID is the app's UUID string, also used by the server code
                 tmp = device.createRfcommSocketToServiceRecord(uuid);
             } catch (IOException e) { }
             mmSocket = tmp;
         }
 
         public void run() {
-            // Cancel discovery because it will slow down the connection
+            /*  Si la recherche d'appareils Bluetooth est toujours en cours
+                on l'annule car cela ralenti la connexion
+              */
             adapter.cancelDiscovery();
 
             if(mmSocket == null) {
@@ -394,11 +452,13 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
 
             try {
-                // Connect the device through the socket. This will block
-                // until it succeeds or throws an exception
+                /*  Connecte l'appareil à travers le socket. Cet appel bloquera
+                    jusqu'à ce que la connexion soit acceptée, ou alors renverra
+                    une erreur
+                 */
                 mmSocket.connect();
             } catch (IOException connectException) {
-                // Unable to connect; close the socket and get out
+                // Impossible de se connecter, on ferme le socket et on sort
                 try {
                     mmSocket.close();
                 } catch (IOException closeException) { }
@@ -407,7 +467,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
 
 
-            // Reset the ConnectThread because we're done
+            // Reset le ConnectThread parce que nous en avons plus besoin
             synchronized (MainActivity.this) {
                 connectThread = null;
             }
@@ -447,21 +507,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
 
         public void run() {
-            byte[] buffer = new byte[1024];  // buffer store for the stream
-            int bytes; // bytes returned from read()
 
-            // Keep listening to the InputStream until an exception occurs
-            while (true) {
-                try {
-                    // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
-                    // Send the obtained bytes to the UI activity
-                   /* mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer)
-                            .sendToTarget();*/
-                } catch (IOException e) {
-                    break;
-                }
-            }
         }
 
         public void write(byte command) {
@@ -479,13 +525,14 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
         }
 
-        /* Call this from the main activity to send data to the remote device */
+        /* On l'appelle depuis le thread principal pour envoyer les données au robot */
         public void writeData(byte[] chunk) {
 
             try {
                 mmOutStream.write(chunk);
                 mmOutStream.flush();
-                // Share the sent message back to the UI Activity
+
+                // On rapporte au thread principal le message
                 mHandler.obtainMessage(MainActivity.MESSAGE_WRITE, -1, -1, chunk).sendToTarget();
             } catch (IOException e) {
                 Log.e("writeData", "Exception during write", e);
@@ -493,7 +540,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
         }
 
-        /* Call this from the main activity to shutdown the connection */
+        /* On l'appelle depuis le thread principal pour stopper la connection */
         public void cancel() {
             try {
                 mmSocket.close();

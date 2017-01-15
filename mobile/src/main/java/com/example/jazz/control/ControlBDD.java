@@ -68,6 +68,7 @@ public class ControlBDD {
     public List<Pair<String, Integer>> cursorToListDirections(Cursor c) {
         List<Pair<String, Integer>> list = new ArrayList<>();
 
+        //Si la requète n'a retournée aucun résultat, on quitte
         if (c.getCount() == 0)
             return null;
 
@@ -105,8 +106,7 @@ public class ControlBDD {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            //On peut fait ce qu'on veut ici moi j'ai décidé de supprimer la table et de la recréer
-            //comme ça lorsque je change la version les id repartent de 0
+            //On supprime la table et on la recrée lorsque la version de la db change
             db.execSQL("DROP TABLE IF EXISTS " + TABLE + ";");
             onCreate(db);
         }
