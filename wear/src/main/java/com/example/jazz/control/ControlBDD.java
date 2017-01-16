@@ -15,9 +15,6 @@ import java.util.List;
  */
 
 public class ControlBDD {
-    private ControlPrefs prefs;
-
-    private int version;
 
     private SQLiteDatabase bdd;
     private BaseSQLite baseSQLite;
@@ -37,14 +34,8 @@ public class ControlBDD {
     private static final int NUM_COL_TIME = 3;
 
     public ControlBDD(Context context){
-        prefs = new ControlPrefs(context);
-
-        if((version = prefs.getIntPreference(ControlPrefs.DB_VERSION)) == 0) version = 1;
-
         //On créer la BDD et sa table
-        baseSQLite = new BaseSQLite(context, NOM_BDD, null, version);
-
-        prefs.saveIntPreference(ControlPrefs.DB_VERSION, version++);
+        baseSQLite = new BaseSQLite(context, NOM_BDD, null, 1);
     }
 
     public void open(){
@@ -77,6 +68,7 @@ public class ControlBDD {
     public List<Pair<String, Integer>> cursorToListDirections(Cursor c) {
         List<Pair<String, Integer>> list = new ArrayList<>();
 
+        //Si la requète n'a retournée aucun résultat, on quitte
         if (c.getCount() == 0)
             return null;
 
@@ -114,8 +106,7 @@ public class ControlBDD {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            //On peut fait ce qu'on veut ici moi j'ai décidé de supprimer la table et de la recréer
-            //comme ça lorsque je change la version les id repartent de 0
+            //On supprime la table et on la recrée lorsque la version de la db change
             db.execSQL("DROP TABLE IF EXISTS " + TABLE + ";");
             onCreate(db);
         }
