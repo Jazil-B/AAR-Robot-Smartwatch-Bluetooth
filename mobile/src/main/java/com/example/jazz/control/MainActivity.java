@@ -1,5 +1,6 @@
 package com.example.jazz.control;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -11,8 +12,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.wearable.activity.WearableActivity;
-import android.support.wearable.view.BoxInsetLayout;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -29,15 +28,11 @@ import java.util.Set;
 import java.util.UUID;
 
 
-public class MainActivity extends WearableActivity implements SensorEventListener {
+public class MainActivity extends Activity implements SensorEventListener {
 
 
     private static final SimpleDateFormat AMBIENT_DATE_FORMAT =
             new SimpleDateFormat("HH:mm", Locale.US);
-
-    private BoxInsetLayout mContainerView;
-    private TextView mTextView;
-    private TextView mClockView;
 
     private GraphView mDrawView;
     private TextView tv;
@@ -96,8 +91,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         MemoList.add("X");
         MemoList.add("X");
         MemoList.add("X");
-
-        setAmbientEnabled();
 
         onCreate = true;
 
@@ -226,20 +219,6 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         }
     }
 
-    @Override
-    public void onEnterAmbient(Bundle ambientDetails) {
-        super.onEnterAmbient(ambientDetails);
-    }
-
-    @Override
-    public void onUpdateAmbient() {
-        super.onUpdateAmbient();
-    }
-
-    @Override
-    public void onExitAmbient() {
-        super.onExitAmbient();
-    }
 
     // Appelé quand l'Activity démarre.
     @Override
@@ -253,11 +232,7 @@ public class MainActivity extends WearableActivity implements SensorEventListene
         sManager.registerListener(this, sManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),SensorManager.SENSOR_DELAY_FASTEST);
     }
 
-<<<<<<< HEAD
-    //Quand l'Activity n'est plus du tout visible
-=======
    //Quand l'Activity n'est plus du tout visible
->>>>>>> V2
     protected void onStop()
     {
 
@@ -608,3 +583,4 @@ public class MainActivity extends WearableActivity implements SensorEventListene
     }
 
 }
+
