@@ -324,8 +324,12 @@ public class MainActivity extends WearableActivity implements SensorEventListene
             }else if(YOrientation2 - YOrientation1 <= -(DELTA*2)){
                 sendValue("L");
                 sendValue("B");
+<<<<<<< HEAD
                 callback.drawGraph(5);
 
+=======
+                Log.d("BAISSE VITESSE","NOW");
+>>>>>>> 2386117c32c2b5c227924714cc10975e1657c5f8
             }else{
                 sendValue("X");
                 callback.drawGraph(8);
@@ -338,10 +342,32 @@ public class MainActivity extends WearableActivity implements SensorEventListene
 
     public void sendValue(String value) {
         if(connectedThread != null && getState() == MainActivity.STATE_CONNECTED) {
+<<<<<<< HEAD
             if(!parcoursArriere && !value.equals("X")) {
                 MemoList.add(value);
             }
 
+=======
+           // Log.d("SendValue", "sending "+value);
+
+            if(!sameDirection) {
+                avant = System.currentTimeMillis();
+            }
+
+            if(currentDir == null) currentDir = value;
+
+            if(!(sameDirection = sameDirection(value))) {
+                apres = System.currentTimeMillis();
+
+                time = (int) (apres - avant);
+
+                bdd.insertDirection(currentDir, time);
+
+                currentDir = value;
+                time = 0;
+            }
+
+>>>>>>> 2386117c32c2b5c227924714cc10975e1657c5f8
             byte[] command = value.getBytes();
             write(command);
         }
